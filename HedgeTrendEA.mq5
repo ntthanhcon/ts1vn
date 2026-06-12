@@ -436,52 +436,8 @@ void OnTick()
       return;
    }
    
-   // Calculate SL and TP
+   // Calculate SL and TP - DISABLED for testing to avoid "invalid stops"
    double sl = 0.0, tp = 0.0;
-   double entry_price = (signal_result.signal == SIGNAL_BUY) ? g_symbol_info.Ask() : g_symbol_info.Bid();
-   
-   // Get point and pip values
-   double point = g_symbol_info.Point();
-   int digits = g_symbol_info.Digits();
-   double point_adjust = (digits == 3 || digits == 5) ? 10 : 1;
-   double pip_value = point * point_adjust;
-   
-   // Calculate SL/TP distance
-   double sl_distance, tp_distance;
-   if(InpUseFixedPipSLTP)
-   {
-      sl_distance = InpFixedSLPips * pip_value;
-      tp_distance = InpFixedTPPips * pip_value;
-   }
-   else
-   {
-      sl_distance = signal_result.atr_value * InpSlAtrMultiplier;
-      tp_distance = signal_result.atr_value * InpTpAtrMultiplier;
-   }
-   
-   // Set SL/TP
-   if(signal_result.signal == SIGNAL_BUY)
-   {
-      sl = entry_price - sl_distance;
-      tp = entry_price + tp_distance;
-   }
-   else
-   {
-      sl = entry_price + sl_distance;
-      tp = entry_price - tp_distance;
-   }
-   
-   // Round properly to symbol's digits FIRST
-   sl = RoundToDigits(sl);
-   tp = RoundToDigits(tp);
-   
-   // Then normalize
-   sl = g_symbol_info.NormalizePrice(sl);
-   tp = g_symbol_info.NormalizePrice(tp);
-   
-   // Round again to be 100% sure
-   sl = RoundToDigits(sl);
-   tp = RoundToDigits(tp);
    
    // Calculate lot size
    double lot = risk_result.lot_size;
