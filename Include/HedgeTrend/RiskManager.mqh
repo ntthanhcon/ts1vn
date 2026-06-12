@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.00"
+#property version   "1.03"
 #property strict
 
 #include <Trade\SymbolInfo.mqh>
@@ -89,14 +89,14 @@ public:
 };
 
 //+------------------------------------------------------------------+
-//| Constructor                                                      |
+//| Constructor                                                       |
 //+------------------------------------------------------------------+
 CRiskManager::CRiskManager() : m_start_balance(0), m_last_reset_day(0)
 {
 }
 
 //+------------------------------------------------------------------+
-//| Destructor                                                       |
+//| Destructor                                                        |
 //+------------------------------------------------------------------+
 CRiskManager::~CRiskManager()
 {
@@ -174,18 +174,23 @@ double CRiskManager::CalculateLotSize(double sl_distance)
    if(!m_config.use_percent_risk)
       return m_config.fixed_lot;
       
-   if(sl_distance <= 0) return 0.0;
+   if(sl_distance <= 0)
+      return m_config.fixed_lot; // Fallback to fixed lot if SL distance invalid
    
    double balance = m_account_info.Balance();
    double risk_amount = balance * (m_config.risk_percent / 100.0);
    
    double tick_value = m_symbol_info.TickValue();
    double tick_size = m_symbol_info.TickSize();
-   if(tick_size <= 0 || tick_value <= 0) return 0.0;
+   
+   if(tick_size <= 0 || tick_value <= 0)
+      return m_config.fixed_lot;
    
    double ticks_in_sl = sl_distance / tick_size;
    double value_per_lot = ticks_in_sl * tick_value;
-   if(value_per_lot <= 0) return 0.0;
+   
+   if(value_per_lot <= 0)
+      return m_config.fixed_lot;
    
    double lot = risk_amount / value_per_lot;
    
@@ -197,7 +202,7 @@ double CRiskManager::CalculateLotSize(double sl_distance)
    double min_lot = m_symbol_info.LotsMin();
    double max_lot = m_symbol_info.LotsMax();
    
-   if(lot < min_lot) lot = 0.0;
+   if(lot < min_lot) lot = min_lot;
    if(lot > max_lot) lot = max_lot;
    
    return NormalizeDouble(lot, (int)MathMax(0, -MathLog10(step)));

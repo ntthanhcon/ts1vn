@@ -419,8 +419,16 @@ void OnTick()
    
    // Calculate lot size
    double lot = risk_result.lot_size;
-   if(!InpUsePercentRisk)
-      lot = InpFixedLot;
+   
+   // Double-check lot
+   double step = g_symbol_info.LotsStep();
+   double min_lot = g_symbol_info.LotsMin();
+   double max_lot = g_symbol_info.LotsMax();
+   
+   lot = MathMax(lot, min_lot);
+   lot = MathMin(lot, max_lot);
+   lot = step * MathFloor(lot / step);
+   lot = NormalizeDouble(lot, (int)MathMax(0, -MathLog10(step)));
       
    if(lot <= 0)
    {
