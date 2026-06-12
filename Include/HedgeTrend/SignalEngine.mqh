@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.01"
+#property version   "1.02"
 #property strict
 
 //+------------------------------------------------------------------+
@@ -191,13 +191,13 @@ bool CSignalEngine::Update(SSignalResult &result)
    
    double ema_fast_arr[], ema_slow_arr[], rsi_arr[], atr_arr[];
    
-   // Copy buffers - need 3 bars for crossover check
-   int copied_fast = CopyBuffer(m_handle_ema_fast, 0, 0, 3, ema_fast_arr);
-   int copied_slow = CopyBuffer(m_handle_ema_slow, 0, 0, 3, ema_slow_arr);
+   // Copy buffers - need 2 bars for simple crossover check
+   int copied_fast = CopyBuffer(m_handle_ema_fast, 0, 0, 2, ema_fast_arr);
+   int copied_slow = CopyBuffer(m_handle_ema_slow, 0, 0, 2, ema_slow_arr);
    int copied_rsi = CopyBuffer(m_handle_rsi, 0, 0, 2, rsi_arr);
    int copied_atr = CopyBuffer(m_handle_atr, 0, 0, 2, atr_arr);
    
-   if(copied_fast < 3 || copied_slow < 3 || copied_rsi < 2 || copied_atr < 1) 
+   if(copied_fast < 2 || copied_slow < 2 || copied_rsi < 2 || copied_atr < 1) 
       return false;
    
    result.ema_fast = ema_fast_arr[0];
@@ -205,21 +205,17 @@ bool CSignalEngine::Update(SSignalResult &result)
    result.rsi_value = rsi_arr[0];
    result.atr_value = atr_arr[0];
    
-   // Check for EMA crossover/crossunder using previous bar values
+   // Simple trend-following: trade with trend direction
+   bool current_trend_up = (result.ema_fast > result.ema_slow);
    bool prev_trend_up = (ema_fast_arr[1] > ema_slow_arr[1]);
-   bool curr_trend_up = (result.ema_fast > result.ema_slow);
-   bool prev_prev_trend_up = (ema_fast_arr[2] > ema_slow_arr[2]);
    
-   // Generate signal only on valid crossover/crossunder
-   bool bullish_crossover = !prev_prev_trend_up && prev_trend_up && curr_trend_up;
-   bool bearish_crossunder = prev_prev_trend_up && !prev_trend_up && !curr_trend_up;
-   
-   if(bullish_crossover && result.rsi_value > m_config.rsi_oversold && result.rsi_value < m_config.rsi_overbought)
+   // Generate signal when trend is established OR changes
+   if(current_trend_up && result.rsi_value > m_config.rsi_oversold && result.rsi_value < m_config.rsi_overbought)
    {
       result.signal = SIGNAL_BUY;
       result.confidence_score = CalculateConfidenceScore(true, result.rsi_value, result.atr_value);
    }
-   else if(bearish_crossunder && result.rsi_value < m_config.rsi_overbought && result.rsi_value > m_config.rsi_oversold)
+   else if(!current_trend_up && result.rsi_value < m_config.rsi_overbought && result.rsi_value > m_config.rsi_oversold)
    {
       result.signal = SIGNAL_SELL;
       result.confidence_score = CalculateConfidenceScore(false, result.rsi_value, result.atr_value);

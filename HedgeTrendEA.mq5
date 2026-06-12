@@ -32,15 +32,15 @@ input int              InpRsiPeriod           = 14;            // RSI Period
 input int              InpRsiOversold         = 30;            // RSI Oversold
 input int              InpRsiOverbought       = 70;            // RSI Overbought
 input int              InpAtrPeriod           = 14;            // ATR Period
-input double           InpMinConfidence       = 60.0;          // Min Confidence Score (0-100)
+input double           InpMinConfidence       = 50.0;          // Min Confidence Score (0-100)
 
 // --- Execution Engine Settings
 input group "=== Execution Engine ==="
 input bool             InpEnableSpreadCheck   = true;          // Enable Spread Check
-input double           InpMaxSpreadXAUUSD     = 50.0;          // Max Spread XAUUSD (pips)
-input double           InpMaxSpreadEURUSD     = 3.0;           // Max Spread EURUSD (pips)
-input double           InpMaxSpreadXAGUSD     = 30.0;          // Max Spread XAGUSD (pips)
-input double           InpMaxSpreadDefault    = 10.0;          // Max Spread Other Symbols (pips)
+input double           InpMaxSpreadXAUUSD     = 500.0;         // Max Spread XAUUSD (pips)
+input double           InpMaxSpreadEURUSD     = 50.0;          // Max Spread EURUSD (pips)
+input double           InpMaxSpreadXAGUSD     = 300.0;         // Max Spread XAGUSD (pips)
+input double           InpMaxSpreadDefault    = 100.0;         // Max Spread Other Symbols (pips)
 
 // --- Risk Manager Settings
 input group "=== Risk Manager ==="

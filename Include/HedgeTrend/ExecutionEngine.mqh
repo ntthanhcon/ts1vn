@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.01"
+#property version   "1.02"
 #property strict
 
 #include <Trade\SymbolInfo.mqh>
@@ -22,10 +22,10 @@ struct SExecutionEngineConfig
    
    SExecutionEngineConfig()
    {
-      max_spread_pips = 10.0;
-      symbol_spread_xauusd = 50.0;
-      symbol_spread_eurusd = 3.0;
-      symbol_spread_xagusd = 30.0;
+      max_spread_pips = 1000.0; // Tăng default lên cao để test
+      symbol_spread_xauusd = 500.0;
+      symbol_spread_eurusd = 50.0;
+      symbol_spread_xagusd = 300.0;
       enable_spread_check = true;
    }
 };
@@ -196,6 +196,11 @@ bool CExecutionEngine::Update(SExecutionResult &result)
          else if(ratio < 0.9) result.score_adjustment = 0.0;
          else result.score_adjustment = -10.0;
       }
+   }
+   else
+   {
+      result.can_execute = true;
+      result.score_adjustment = 0.0;
    }
    
    return true;
