@@ -420,32 +420,24 @@ void OnTick()
    // Calculate lot size
    double lot = risk_result.lot_size;
    
-   // Double-check lot
-   double step = g_symbol_info.LotsStep();
+   // Double-check lot - ensure it's valid
+   double lot_step = g_symbol_info.LotsStep();
    double min_lot = g_symbol_info.LotsMin();
    double max_lot = g_symbol_info.LotsMax();
    
+   // Fallback to fixed lot if risk-based lot is invalid
+   if(lot <= 0)
+      lot = InpFixedLot;
+      
+   // Normalize and clamp lot size
    lot = MathMax(lot, min_lot);
    lot = MathMin(lot, max_lot);
-   lot = step * MathFloor(lot / step);
-   lot = NormalizeDouble(lot, (int)MathMax(0, -MathLog10(step)));
+   lot = lot_step * MathFloor(lot / lot_step);
+   lot = NormalizeDouble(lot, (int)MathMax(0, -MathLog10(lot_step)));
       
-   if(lot <= 0)
+   if(lot < min_lot)
    {
-      if(InpDebugMode) Print("Invalid lot size: ", lot);
-      return;
-   }
-   
-   // Validate lot size
-   double step = g_symbol_info.LotsStep();
-   lot = step * MathFloor(lot / step);
-   lot = MathMax(lot, g_symbol_info.LotsMin());
-   lot = MathMin(lot, g_symbol_info.LotsMax());
-   lot = NormalizeDouble(lot, (int)MathMax(0, -MathLog10(step)));
-   
-   if(lot < g_symbol_info.LotsMin())
-   {
-      if(InpDebugMode) Print("Lot size below minimum: ", lot, " < ", g_symbol_info.LotsMin());
+      if(InpDebugMode) Print("Lot size below minimum: ", lot, " < ", min_lot);
       return;
    }
    
