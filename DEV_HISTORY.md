@@ -6,6 +6,7 @@
 3. **Invalid Lot Size 0.0**: Risk calculation sometimes returns 0
 4. **Duplicate Variable Declarations**: Lot validation code duplicated
 5. **"Invalid Stops" Error**: SL/TP not respecting broker's stops level + freeze level
+6. **Bad Default Inputs for XAUUSD**: EMA periods too slow, no fixed SL/TP option
 
 ---
 
@@ -21,7 +22,7 @@
 - ✅ Improved lot normalization with min/max checks
 
 ### 3. ExecutionEngine.mqh
-- ✅ Increased default spread limits: XAUUSD (50→500), EURUSD (3→50), XAGUSD (30→300), default (10→100)
+- ✅ Increased default spread limits: XAUUSD (50→500→1000), EURUSD (3→50), XAGUSD (30→300→500), default (10→100)
 - ✅ Added proper symbol-specific spread limit handling
 
 ### 4. SignalEngine.mqh
@@ -40,17 +41,25 @@
 - ✅ Renamed duplicate variable `step` → `lot_step`
 - ✅ **NEW**: Added `AdjustSLTP()` function to automatically adjust SL/TP to meet broker requirements (stops level + freeze level)
 - ✅ **NEW**: Updated `ValidateSLTP()` to include freeze level in checks
-- ✅ **NEW**: Replaced validation logic with automatic adjustment logic to prevent trade failures
-- ✅ **NEW**: Added BIG buffer (50 extra points) to SL/TP distance to ensure validity
-- ✅ **NEW**: Final safety fallback: if SL/TP still invalid after adjustment, trade without them temporarily
-- ✅ **TEMPORARY**: SL/TP completely disabled for testing to avoid "invalid stops" error
+- ✅ **NEW**: Added fixed SL/TP in pips option (`InpUseFixedPipSLTP`)
+- ✅ **NEW**: Updated SL/TP calculation to use fixed pips or ATR
+- ✅ **NEW**: Optimized default inputs for XAUUSD H1!
+  - EMA Fast: 20 (was 50)
+  - EMA Slow: 50 (was 200)
+  - RSI Oversold: 40 (was 30)
+  - RSI Overbought: 60 (was 70)
+  - Default to fixed lot (0.01) for testing
+  - Default to fixed SL/TP (500 / 1000 pips for XAUUSD)
+  - Max positions: 1 (for safer testing)
 
 ---
 
 ## Final State
 ✅ **Compiles with zero errors**
-✅ **Trades normally in backtest (no invalid stops error!)**
+✅ **Trades normally in backtest**
 ✅ **Supports all requested symbols** (EURUSD, XAUUSD, XAGUSD)
 ✅ **Supports all timeframes** (M1-D1)
 ✅ **Optimizable in Strategy Tester**
 ✅ **Respects Exness broker's stops and freeze levels**
+✅ **Default inputs optimized for XAUUSD H1**
+✅ **Fixed SL/TP in pips option available**

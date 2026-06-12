@@ -26,33 +26,36 @@ input ulong            InpMagicNumber         = 51000;         // EA Magic Numbe
 
 // --- Signal Engine Settings
 input group "=== Signal Engine ==="
-input int              InpEmaFastPeriod       = 50;            // EMA Fast Period
-input int              InpEmaSlowPeriod       = 200;           // EMA Slow Period
+input int              InpEmaFastPeriod       = 20;            // EMA Fast Period (better for XAUUSD)
+input int              InpEmaSlowPeriod       = 50;            // EMA Slow Period (better for XAUUSD)
 input int              InpRsiPeriod           = 14;            // RSI Period
-input int              InpRsiOversold         = 30;            // RSI Oversold
-input int              InpRsiOverbought       = 70;            // RSI Overbought
+input int              InpRsiOversold         = 40;            // RSI Oversold (higher for XAUUSD)
+input int              InpRsiOverbought       = 60;            // RSI Overbought (lower for XAUUSD)
 input int              InpAtrPeriod           = 14;            // ATR Period
 input double           InpMinConfidence       = 50.0;          // Min Confidence Score (0-100)
 
 // --- Execution Engine Settings
 input group "=== Execution Engine ==="
 input bool             InpEnableSpreadCheck   = true;          // Enable Spread Check
-input double           InpMaxSpreadXAUUSD     = 500.0;         // Max Spread XAUUSD (pips)
+input double           InpMaxSpreadXAUUSD     = 1000.0;        // Max Spread XAUUSD (pips)
 input double           InpMaxSpreadEURUSD     = 50.0;          // Max Spread EURUSD (pips)
-input double           InpMaxSpreadXAGUSD     = 300.0;         // Max Spread XAGUSD (pips)
+input double           InpMaxSpreadXAGUSD     = 500.0;         // Max Spread XAGUSD (pips)
 input double           InpMaxSpreadDefault    = 100.0;         // Max Spread Other Symbols (pips)
 
 // --- Risk Manager Settings
 input group "=== Risk Manager ==="
-input bool             InpUsePercentRisk      = true;          // Use % Risk per Trade
+input bool             InpUsePercentRisk      = false;         // Use Fixed Lot for testing first
 input double           InpRiskPercent         = 1.0;           // Risk % per Trade
-input double           InpFixedLot            = 0.1;           // Fixed Lot Size
-input double           InpSlAtrMultiplier     = 1.5;           // SL = ATR * Multiplier
-input double           InpTpAtrMultiplier     = 3.0;           // TP = ATR * Multiplier
-input double           InpDailyLossLimit      = 5.0;           // Daily Loss Limit (%)
-input double           InpDailyProfitTarget   = 10.0;          // Daily Profit Target (%)
-input int              InpMaxPositionsPerSym  = 3;             // Max Positions per Symbol
-input double           InpMaxExposurePercent  = 30.0;          // Max Exposure (%)
+input double           InpFixedLot            = 0.01;          // Fixed Lot Size (smaller for XAUUSD)
+input bool             InpUseFixedPipSLTP     = true;          // Use Fixed Pips for SL/TP instead of ATR
+input double           InpFixedSLPips         = 500.0;         // Fixed SL (pips) for XAUUSD
+input double           InpFixedTPPips         = 1000.0;        // Fixed TP (pips) for XAUUSD
+input double           InpSlAtrMultiplier     = 1.5;           // SL = ATR * Multiplier (if not using fixed)
+input double           InpTpAtrMultiplier     = 3.0;           // TP = ATR * Multiplier (if not using fixed)
+input double           InpDailyLossLimit      = 10.0;          // Daily Loss Limit (%)
+input double           InpDailyProfitTarget   = 20.0;          // Daily Profit Target (%)
+input int              InpMaxPositionsPerSym  = 1;             // Max Positions per Symbol (1 for testing)
+input double           InpMaxExposurePercent  = 50.0;          // Max Exposure (%)
 
 // --- Position Manager Settings
 input group "=== Position Manager ==="
@@ -422,41 +425,44 @@ void OnTick()
       return;
    }
    
-   // Calculate SL and TP - TEMPORARILY DISABLED for testing
+   // Calculate SL and TP
    double sl = 0.0, tp = 0.0;
-   // double entry_price = (signal_result.signal == SIGNAL_BUY) ? g_symbol_info.Ask() : g_symbol_info.Bid();
-   // double sl_distance = signal_result.atr_value * InpSlAtrMultiplier;
-   // double tp_distance = signal_result.atr_value * InpTpAtrMultiplier;
+   double entry_price = (signal_result.signal == SIGNAL_BUY) ? g_symbol_info.Ask() : g_symbol_info.Bid();
    
-   // if(signal_result.signal == SIGNAL_BUY)
-   // {
-   //    sl = entry_price - sl_distance;
-   //    tp = entry_price + tp_distance;
-   // }
-   // else
-   // {
-   //    sl = entry_price + sl_distance;
-   //    tp = entry_price - tp_distance;
-   // }
+   // Get point and pip values
+   double point = g_symbol_info.Point();
+   int digits = g_symbol_info.Digits();
+   double point_adjust = (digits == 3 || digits == 5) ? 10 : 1;
+   double pip_value = point * point_adjust;
+   
+   // Calculate SL/TP distance
+   double sl_distance, tp_distance;
+   if(InpUseFixedPipSLTP)
+   {
+      sl_distance = InpFixedSLPips * pip_value;
+      tp_distance = InpFixedTPPips * pip_value;
+   }
+   else
+   {
+      sl_distance = signal_result.atr_value * InpSlAtrMultiplier;
+      tp_distance = signal_result.atr_value * InpTpAtrMultiplier;
+   }
+   
+   // Set SL/TP
+   if(signal_result.signal == SIGNAL_BUY)
+   {
+      sl = entry_price - sl_distance;
+      tp = entry_price + tp_distance;
+   }
+   else
+   {
+      sl = entry_price + sl_distance;
+      tp = entry_price - tp_distance;
+   }
    
    // Normalize prices
-   // sl = g_symbol_info.NormalizePrice(sl);
-   // tp = g_symbol_info.NormalizePrice(tp);
-   
-   // Try to adjust SL/TP
-   // AdjustSLTP(sl, tp, entry_price, signal_result.signal);
-   
-   // Re-normalize after adjustment
-   // sl = g_symbol_info.NormalizePrice(sl);
-   // tp = g_symbol_info.NormalizePrice(tp);
-   
-   // Final safety check: if SL/TP still invalid, set to 0 (trade without SL/TP for testing)
-   // if(!ValidateSLTP(entry_price, sl, tp, signal_result.signal))
-   // {
-   //    if(InpDebugMode) Print("SL/TP still invalid - trading without SL/TP temporarily");
-   //    sl = 0.0;
-   //    tp = 0.0;
-   // }
+   sl = g_symbol_info.NormalizePrice(sl);
+   tp = g_symbol_info.NormalizePrice(tp);
    
    // Calculate lot size
    double lot = risk_result.lot_size;
