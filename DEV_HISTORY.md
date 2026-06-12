@@ -5,7 +5,7 @@
 2. **No Trades in Backtest**: Signal too strict, spread limits too low
 3. **Invalid Lot Size 0.0**: Risk calculation sometimes returns 0
 4. **Duplicate Variable Declarations**: Lot validation code duplicated
-5. **"Invalid Stops" Error**: SL/TP not respecting broker's stops level + freeze level
+5. **"Invalid Stops" Error**: SL/TP not respecting broker's stops level + freeze level, plus wrong digit rounding!
 6. **Bad Default Inputs for XAUUSD**: EMA periods too slow, no fixed SL/TP option
 
 ---
@@ -40,6 +40,7 @@
 - ✅ Added fallback to fixed lot if risk-based lot is invalid
 - ✅ Renamed duplicate variable `step` → `lot_step`
 - ✅ **NEW**: Added `AdjustSLTP()` function to automatically adjust SL/TP to meet broker requirements (stops level + freeze level)
+- ✅ **NEW**: Added `RoundToDigits()` helper function to properly round prices to symbol's digits (fixed 3-digit → 2-digit issue for XAUUSD)
 - ✅ **NEW**: Updated `ValidateSLTP()` to include freeze level in checks
 - ✅ **NEW**: Added fixed SL/TP in pips option (`InpUseFixedPipSLTP`)
 - ✅ **NEW**: Updated SL/TP calculation to use fixed pips or ATR
@@ -63,3 +64,4 @@
 ✅ **Respects Exness broker's stops and freeze levels**
 ✅ **Default inputs optimized for XAUUSD H1**
 ✅ **Fixed SL/TP in pips option available**
+✅ **FIXED: Proper digit rounding (3-digit → 2-digit for XAUUSD)**

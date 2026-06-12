@@ -254,6 +254,17 @@ bool IsMarketClosed()
 }
 
 //+------------------------------------------------------------------+
+//| Properly round price to symbol's digits                           |
+//+------------------------------------------------------------------+
+double RoundToDigits(double price)
+{
+   int digits = g_symbol_info.Digits();
+   double point = g_symbol_info.Point();
+   double p = MathPow(10, digits);
+   return MathRound(price * p) / p;
+}
+
+//+------------------------------------------------------------------+
 //| Adjust SL and TP to meet broker requirements (with big buffer)     |
 //+------------------------------------------------------------------+
 void AdjustSLTP(double &sl, double &tp, double entry, ENUM_SIGNAL signal)
@@ -264,22 +275,22 @@ void AdjustSLTP(double &sl, double &tp, double entry, ENUM_SIGNAL signal)
    double point = g_symbol_info.Point();
    double stops_level = g_symbol_info.StopsLevel();
    double freeze_level = g_symbol_info.FreezeLevel();
-   // Add extra buffer of 50 points to be absolutely safe
-   double min_distance = (stops_level + freeze_level + 50) * point;
+   // Add extra buffer of 100 points to be absolutely safe
+   double min_distance = (stops_level + freeze_level + 100) * point;
    
    if(signal == SIGNAL_BUY)
    {
       if(sl != 0)
-         sl = g_symbol_info.NormalizePrice(entry - min_distance - (10 * point));
+         sl = RoundToDigits(entry - min_distance - (20 * point));
       if(tp != 0)
-         tp = g_symbol_info.NormalizePrice(entry + min_distance + (10 * point));
+         tp = RoundToDigits(entry + min_distance + (20 * point));
    }
    else if(signal == SIGNAL_SELL)
    {
       if(sl != 0)
-         sl = g_symbol_info.NormalizePrice(entry + min_distance + (10 * point));
+         sl = RoundToDigits(entry + min_distance + (20 * point));
       if(tp != 0)
-         tp = g_symbol_info.NormalizePrice(entry - min_distance - (10 * point));
+         tp = RoundToDigits(entry - min_distance - (20 * point));
    }
 }
 
@@ -460,9 +471,17 @@ void OnTick()
       tp = entry_price - tp_distance;
    }
    
-   // Normalize prices
+   // Round properly to symbol's digits FIRST
+   sl = RoundToDigits(sl);
+   tp = RoundToDigits(tp);
+   
+   // Then normalize
    sl = g_symbol_info.NormalizePrice(sl);
    tp = g_symbol_info.NormalizePrice(tp);
+   
+   // Round again to be 100% sure
+   sl = RoundToDigits(sl);
+   tp = RoundToDigits(tp);
    
    // Calculate lot size
    double lot = risk_result.lot_size;
