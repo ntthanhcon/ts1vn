@@ -34,3 +34,15 @@ implicit conversion from 'string' to 'number'	HedgeEngine.mqh	223	68
 implicit conversion from 'string' to 'number'	HedgeEngine.mqh	225	67
 implicit conversion from 'string' to 'double'	HedgeTrendEA.mq5	231	45
 implicit conversion from 'string' to 'double'	HedgeTrendEA.mq5	244	46
+
+
+
+2026.06.12 19:12:51.845	Core 1	2026.06.04 20:00:00   CTrade::OrderSend: market sell 0.01 XAUUSDm sl: 4428.939 [invalid stops]
+2026.06.12 19:12:51.845	Core 1	2026.06.04 20:00:00   SELL failed: Error=4756 Retcode=10016 Desc=invalid stops
+2026.06.12 19:12:51.845	Core 1	2026.06.04 22:00:31   New bar - Signal=SIGNAL_SELL Confidence=100.0 Spread=28.000000000065484 pips Spread OK=true Risk OK=true
+2026.06.12 19:12:51.845	Core 1	2026.06.04 22:00:31   failed market sell 0.01 XAUUSDm sl: 4424.941 [Invalid stops]
+2026.06.12 19:12:51.845	Core 1	2026.06.04 22:00:31   CTrade::OrderSend: market sell 0.01 XAUUSDm sl: 4424.941 [invalid stops]
+2026.06.12 19:12:51.845	Core 1	2026.06.04 22:00:31   SELL failed: Error=4756 Retcode=10016 Desc=invalid stops
+2026.06.12 19:12:51.845	Core 1	2026.06.04 23:00:00   New bar - Signal=SIGNAL_SELL Confidence=90.0 Spread=27.999999999974534 pips Spread OK=true Risk OK=true
+2026.06.12 19:12:51.845	Core 1	2026.06.04 23:00:00   failed market sell 0.01 XAUUSDm sl: 4419.099 [Invalid stops]
+2026.06.12 19:12:51.845	Core 1	2026.06.04 23:00:00   CTrade::OrderSend: market sell 0.01 XAUUSDm sl: 4419.099 [invalid stops]

@@ -251,6 +251,35 @@ bool IsMarketClosed()
 }
 
 //+------------------------------------------------------------------+
+//| Adjust SL and TP to meet broker requirements                      |
+//+------------------------------------------------------------------+
+void AdjustSLTP(double &sl, double &tp, double entry, ENUM_SIGNAL signal)
+{
+   if(sl == 0 && tp == 0)
+      return;
+      
+   double point = g_symbol_info.Point();
+   double stops_level = g_symbol_info.StopsLevel();
+   double freeze_level = g_symbol_info.FreezeLevel();
+   double min_distance = (stops_level + freeze_level) * point;
+   
+   if(signal == SIGNAL_BUY)
+   {
+      if(sl != 0 && sl >= entry - min_distance)
+         sl = g_symbol_info.NormalizePrice(entry - min_distance - point);
+      if(tp != 0 && tp <= entry + min_distance)
+         tp = g_symbol_info.NormalizePrice(entry + min_distance + point);
+   }
+   else if(signal == SIGNAL_SELL)
+   {
+      if(sl != 0 && sl <= entry + min_distance)
+         sl = g_symbol_info.NormalizePrice(entry + min_distance + point);
+      if(tp != 0 && tp >= entry - min_distance)
+         tp = g_symbol_info.NormalizePrice(entry - min_distance - point);
+   }
+}
+
+//+------------------------------------------------------------------+
 //| Validate SL and TP prices                                         |
 //+------------------------------------------------------------------+
 bool ValidateSLTP(double entry, double sl, double tp, ENUM_SIGNAL signal)
@@ -258,7 +287,10 @@ bool ValidateSLTP(double entry, double sl, double tp, ENUM_SIGNAL signal)
    if(sl == 0 && tp == 0)
       return true;
       
-   double min_distance = g_symbol_info.StopsLevel() * g_symbol_info.Point();
+   double point = g_symbol_info.Point();
+   double stops_level = g_symbol_info.StopsLevel();
+   double freeze_level = g_symbol_info.FreezeLevel();
+   double min_distance = (stops_level + freeze_level) * point;
    
    if(signal == SIGNAL_BUY)
    {
@@ -410,12 +442,12 @@ void OnTick()
    sl = g_symbol_info.NormalizePrice(sl);
    tp = g_symbol_info.NormalizePrice(tp);
    
-   // Validate SL/TP distance
-   if(!ValidateSLTP(entry_price, sl, tp, signal_result.signal))
-   {
-      if(InpDebugMode) Print("Invalid SL/TP distance - SL=", sl, " TP=", tp, " Entry=", entry_price);
-      return;
-   }
+   // Adjust SL/TP to meet broker requirements (stops + freeze level)
+   AdjustSLTP(sl, tp, entry_price, signal_result.signal);
+   
+   // Re-normalize after adjustment
+   sl = g_symbol_info.NormalizePrice(sl);
+   tp = g_symbol_info.NormalizePrice(tp);
    
    // Calculate lot size
    double lot = risk_result.lot_size;
