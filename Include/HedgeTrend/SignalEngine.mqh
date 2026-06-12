@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.02"
+#property version   "1.03"
 #property strict
 
 //+------------------------------------------------------------------+
@@ -12,23 +12,23 @@
 //+------------------------------------------------------------------+
 struct SSignalEngineConfig
 {
-   int                ema_fast_period;        // EMA Fast (default 50)
-   int                ema_slow_period;        // EMA Slow (default 200)
+   int                ema_fast_period;        // EMA Fast (default 20)
+   int                ema_slow_period;        // EMA Slow (default 50)
    int                rsi_period;             // RSI Period (default 14)
-   int                rsi_oversold;           // RSI Oversold (default 30)
-   int                rsi_overbought;         // RSI Overbought (default 70)
+   int                rsi_oversold;           // RSI Oversold (not used now)
+   int                rsi_overbought;         // RSI Overbought (not used now)
    int                atr_period;             // ATR Period (default 14)
    double             min_confidence_score;   // Min confidence to trade (0-100)
    
    SSignalEngineConfig()
    {
-      ema_fast_period = 50;
-      ema_slow_period = 200;
+      ema_fast_period = 20;
+      ema_slow_period = 50;
       rsi_period = 14;
-      rsi_oversold = 30;
-      rsi_overbought = 70;
+      rsi_oversold = 40;
+      rsi_overbought = 60;
       atr_period = 14;
-      min_confidence_score = 60.0;
+      min_confidence_score = 50.0;
    }
 };
 
@@ -159,22 +159,8 @@ double CSignalEngine::CalculateConfidenceScore(bool is_trend_up, double rsi, dou
 {
    double score = 0.0;
    
-   // Trend weight (50%)
-   score += 50.0;
-   
-   // RSI weight (30%)
-   if(is_trend_up)
-   {
-      if(rsi > m_config.rsi_oversold && rsi < 50) score += 30.0;
-      else if(rsi >= 50 && rsi < m_config.rsi_overbought) score += 20.0;
-      else score += 5.0;
-   }
-   else
-   {
-      if(rsi < m_config.rsi_overbought && rsi > 50) score += 30.0;
-      else if(rsi <= 50 && rsi > m_config.rsi_oversold) score += 20.0;
-      else score += 5.0;
-   }
+   // Trend weight (80%)
+   score += 80.0;
    
    // ATR volatility (20%) - give full score if ATR is valid
    if(atr > 0) score += 20.0;
@@ -191,7 +177,7 @@ bool CSignalEngine::Update(SSignalResult &result)
    
    double ema_fast_arr[], ema_slow_arr[], rsi_arr[], atr_arr[];
    
-   // Copy buffers - need 2 bars for simple crossover check
+   // Copy buffers
    int copied_fast = CopyBuffer(m_handle_ema_fast, 0, 0, 2, ema_fast_arr);
    int copied_slow = CopyBuffer(m_handle_ema_slow, 0, 0, 2, ema_slow_arr);
    int copied_rsi = CopyBuffer(m_handle_rsi, 0, 0, 2, rsi_arr);
@@ -205,25 +191,20 @@ bool CSignalEngine::Update(SSignalResult &result)
    result.rsi_value = rsi_arr[0];
    result.atr_value = atr_arr[0];
    
-   // Simple trend-following: trade with trend direction
+   // Simple trend-following: NO RSI FILTER! Just EMA trend!
    bool current_trend_up = (result.ema_fast > result.ema_slow);
    bool prev_trend_up = (ema_fast_arr[1] > ema_slow_arr[1]);
    
-   // Generate signal when trend is established OR changes
-   if(current_trend_up && result.rsi_value > m_config.rsi_oversold && result.rsi_value < m_config.rsi_overbought)
+   // Also trade on every candle when trend is up/down, not just crossovers
+   if(current_trend_up)
    {
       result.signal = SIGNAL_BUY;
       result.confidence_score = CalculateConfidenceScore(true, result.rsi_value, result.atr_value);
    }
-   else if(!current_trend_up && result.rsi_value < m_config.rsi_overbought && result.rsi_value > m_config.rsi_oversold)
+   else
    {
       result.signal = SIGNAL_SELL;
       result.confidence_score = CalculateConfidenceScore(false, result.rsi_value, result.atr_value);
-   }
-   else
-   {
-      result.signal = SIGNAL_NONE;
-      result.confidence_score = 0.0;
    }
    
    return true;

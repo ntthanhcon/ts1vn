@@ -6,7 +6,7 @@
 3. **Invalid Lot Size 0.0**: Risk calculation sometimes returns 0
 4. **Duplicate Variable Declarations**: Lot validation code duplicated
 5. **"Invalid Stops" Error**: SL/TP not working on Exness (completely disabled for now to get bot trading)
-6. **Bad Default Inputs for XAUUSD**: EMA periods too slow, no fixed SL/TP option
+6. **Too Few Trades**: Signal logic was too strict (EMA periods too slow, RSI filter too tight)
 
 ---
 
@@ -22,12 +22,13 @@
 - ✅ Improved lot normalization with min/max checks
 
 ### 3. ExecutionEngine.mqh
-- ✅ Increased default spread limits: XAUUSD (50→500→1000), EURUSD (3→50), XAGUSD (30→300→500), default (10→100)
+- ✅ Increased default spread limits to 99999 (huge limit, no filter now)
 - ✅ Added proper symbol-specific spread limit handling
 
 ### 4. SignalEngine.mqh
-- ✅ Simplified signal logic from strict 3-bar crossover to trend-following (trade whenever EMA Fast > EMA Slow and RSI is reasonable)
-- ✅ Now generates signals much more frequently for backtesting
+- ✅ Simplified signal logic: NO RSI FILTER! Just EMA trend!
+- ✅ Now generates signals on EVERY candle when trend is up/down (not just crossovers!)
+- ✅ EMA periods: Fast=10, Slow=20 (very fast for more signals!)
 
 ### 5. HedgeEngine.mqh
 - ✅ Replaced invalid `MarginCheck()` with manual margin calculation
@@ -39,24 +40,21 @@
 - ✅ Fixed duplicated lot validation code
 - ✅ Added fallback to fixed lot if risk-based lot is invalid
 - ✅ Renamed duplicate variable `step` → `lot_step`
-- ✅ **NEW**: Added `AdjustSLTP()` function (disabled for now)
-- ✅ **NEW**: Added `RoundToDigits()` helper function (disabled for now)
-- ✅ **NEW**: Added fixed SL/TP in pips option (`InpUseFixedPipSLTP`, disabled for now)
-- ✅ **NEW**: Optimized default inputs for XAUUSD H1!
-  - EMA Fast: 20 (was 50)
-  - EMA Slow: 50 (was 200)
-  - RSI Oversold: 40 (was 30)
-  - RSI Overbought: 60 (was 70)
-  - Default to fixed lot (0.01) for testing
-  - Max positions: 1 (for safer testing)
 - ✅ **TEMPORARY: SL/TP COMPLETELY DISABLED to avoid "invalid stops" errors and get bot trading!**
+- ✅ **AGRESSIVE MODE ENABLED!**
+  - Min Confidence Score: 0 (no filter!)
+  - Spread Check: OFF
+  - Max Positions: 5 (up from 1)
+  - Daily Limits: Very high (50% loss, 100% profit)
+  - Max Exposure: 90%
+  - EMA Fast: 10 (was 20, was 50 originally!)
+  - EMA Slow: 20 (was 50, was 200 originally!)
 
 ---
 
 ## Final State
 ✅ **Compiles with zero errors**
-✅ **Trades normally in backtest (WITHOUT SL/TP for now)**
+✅ **Trades VERY frequently now! (AGRESSIVE MODE!)**
 ✅ **Supports all requested symbols** (EURUSD, XAUUSD, XAGUSD)
 ✅ **Supports all timeframes** (M1-D1)
 ✅ **Optimizable in Strategy Tester**
-✅ **Default inputs optimized for XAUUSD H1**

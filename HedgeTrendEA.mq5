@@ -26,21 +26,21 @@ input ulong            InpMagicNumber         = 51000;         // EA Magic Numbe
 
 // --- Signal Engine Settings
 input group "=== Signal Engine ==="
-input int              InpEmaFastPeriod       = 20;            // EMA Fast Period (better for XAUUSD)
-input int              InpEmaSlowPeriod       = 50;            // EMA Slow Period (better for XAUUSD)
+input int              InpEmaFastPeriod       = 10;            // EMA Fast Period (very fast!)
+input int              InpEmaSlowPeriod       = 20;            // EMA Slow Period (very fast!)
 input int              InpRsiPeriod           = 14;            // RSI Period
-input int              InpRsiOversold         = 40;            // RSI Oversold (higher for XAUUSD)
-input int              InpRsiOverbought       = 60;            // RSI Overbought (lower for XAUUSD)
+input int              InpRsiOversold         = 40;            // RSI Oversold
+input int              InpRsiOverbought       = 60;            // RSI Overbought
 input int              InpAtrPeriod           = 14;            // ATR Period
-input double           InpMinConfidence       = 50.0;          // Min Confidence Score (0-100)
+input double           InpMinConfidence       = 0.0;           // Min Confidence Score (0-100, 0 = no filter)
 
 // --- Execution Engine Settings
 input group "=== Execution Engine ==="
-input bool             InpEnableSpreadCheck   = true;          // Enable Spread Check
-input double           InpMaxSpreadXAUUSD     = 1000.0;        // Max Spread XAUUSD (pips)
-input double           InpMaxSpreadEURUSD     = 50.0;          // Max Spread EURUSD (pips)
-input double           InpMaxSpreadXAGUSD     = 500.0;         // Max Spread XAGUSD (pips)
-input double           InpMaxSpreadDefault    = 100.0;         // Max Spread Other Symbols (pips)
+input bool             InpEnableSpreadCheck   = false;         // Disable Spread Check temporarily for more trades
+input double           InpMaxSpreadXAUUSD     = 99999.0;       // Max Spread XAUUSD (pips, huge limit)
+input double           InpMaxSpreadEURUSD     = 99999.0;       // Max Spread EURUSD (pips, huge limit)
+input double           InpMaxSpreadXAGUSD     = 99999.0;       // Max Spread XAGUSD (pips, huge limit)
+input double           InpMaxSpreadDefault    = 99999.0;       // Max Spread Other Symbols (pips, huge limit)
 
 // --- Risk Manager Settings
 input group "=== Risk Manager ==="
@@ -52,10 +52,10 @@ input double           InpFixedSLPips         = 500.0;         // Fixed SL (pips
 input double           InpFixedTPPips         = 1000.0;        // Fixed TP (pips) for XAUUSD
 input double           InpSlAtrMultiplier     = 1.5;           // SL = ATR * Multiplier (if not using fixed)
 input double           InpTpAtrMultiplier     = 3.0;           // TP = ATR * Multiplier (if not using fixed)
-input double           InpDailyLossLimit      = 10.0;          // Daily Loss Limit (%)
-input double           InpDailyProfitTarget   = 20.0;          // Daily Profit Target (%)
-input int              InpMaxPositionsPerSym  = 1;             // Max Positions per Symbol (1 for testing)
-input double           InpMaxExposurePercent  = 50.0;          // Max Exposure (%)
+input double           InpDailyLossLimit      = 50.0;          // Daily Loss Limit (%) (very high for testing)
+input double           InpDailyProfitTarget   = 100.0;         // Daily Profit Target (%) (very high for testing)
+input int              InpMaxPositionsPerSym  = 5;             // Max Positions per Symbol (5 for more trades)
+input double           InpMaxExposurePercent  = 90.0;          // Max Exposure (%) (very high for testing)
 
 // --- Position Manager Settings
 input group "=== Position Manager ==="
