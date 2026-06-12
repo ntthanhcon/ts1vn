@@ -5,6 +5,7 @@
 2. **No Trades in Backtest**: Signal too strict, spread limits too low
 3. **Invalid Lot Size 0.0**: Risk calculation sometimes returns 0
 4. **Duplicate Variable Declarations**: Lot validation code duplicated
+5. **"Invalid Stops" Error**: SL/TP not respecting broker's stops level + freeze level
 
 ---
 
@@ -37,12 +38,16 @@
 - ✅ Fixed duplicated lot validation code
 - ✅ Added fallback to fixed lot if risk-based lot is invalid
 - ✅ Renamed duplicate variable `step` → `lot_step`
+- ✅ **NEW**: Added `AdjustSLTP()` function to automatically adjust SL/TP to meet broker requirements (stops level + freeze level)
+- ✅ **NEW**: Updated `ValidateSLTP()` to include freeze level in checks
+- ✅ **NEW**: Replaced validation logic with automatic adjustment logic to prevent trade failures
 
 ---
 
 ## Final State
 ✅ **Compiles with zero errors**
-✅ **Trades normally in backtest**
+✅ **Trades normally in backtest (no invalid stops error!)**
 ✅ **Supports all requested symbols** (EURUSD, XAUUSD, XAGUSD)
 ✅ **Supports all timeframes** (M1-D1)
 ✅ **Optimizable in Strategy Tester**
+✅ **Respects Exness broker's stops and freeze levels**
