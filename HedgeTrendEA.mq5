@@ -199,7 +199,6 @@ int OnInit()
    // Setup trade object
    g_trade.SetExpertMagicNumber(InpMagicNumber);
    g_trade.SetTypeFilling(ORDER_FILLING_IOC);
-   g_trade.SetTypeTime(ORDER_TIME_GTC);
    
    Print("HedgeTrend EA v1.02 initialized successfully!");
    Print("Symbol: ", _Symbol, " | Timeframe: ", EnumToString(InpTimeframe));
@@ -430,9 +429,11 @@ void OnTick()
    }
    
    // Validate lot size
-   lot = g_symbol_info.LotsMin() > lot ? g_symbol_info.LotsMin() : lot;
-   lot = g_symbol_info.LotsMax() < lot ? g_symbol_info.LotsMax() : lot;
-   lot = g_symbol_info.NormalizeLot(lot);
+   double step = g_symbol_info.LotsStep();
+   lot = step * MathFloor(lot / step);
+   lot = MathMax(lot, g_symbol_info.LotsMin());
+   lot = MathMin(lot, g_symbol_info.LotsMax());
+   lot = NormalizeDouble(lot, (int)MathMax(0, -MathLog10(step)));
    
    if(lot < g_symbol_info.LotsMin())
    {
