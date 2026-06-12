@@ -4,21 +4,21 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.00"
+#property version   "1.01"
 #property strict
 
 //+------------------------------------------------------------------+
-//| Signal Engine Configuration                                      |
+//| Signal Engine Configuration                                       |
 //+------------------------------------------------------------------+
 struct SSignalEngineConfig
 {
-   int                ema_fast_period;         // EMA Fast (default 50)
-   int                ema_slow_period;         // EMA Slow (default 200)
-   int                rsi_period;              // RSI Period (default 14)
-   int                rsi_oversold;            // RSI Oversold (default 30)
-   int                rsi_overbought;          // RSI Overbought (default 70)
-   int                atr_period;              // ATR Period (default 14)
-   double             min_confidence_score;    // Min confidence to trade (0-100)
+   int                ema_fast_period;        // EMA Fast (default 50)
+   int                ema_slow_period;        // EMA Slow (default 200)
+   int                rsi_period;             // RSI Period (default 14)
+   int                rsi_oversold;           // RSI Oversold (default 30)
+   int                rsi_overbought;         // RSI Overbought (default 70)
+   int                atr_period;             // ATR Period (default 14)
+   double             min_confidence_score;   // Min confidence to trade (0-100)
    
    SSignalEngineConfig()
    {
@@ -33,7 +33,7 @@ struct SSignalEngineConfig
 };
 
 //+------------------------------------------------------------------+
-//| Signal Result Struct                                             |
+//| Signal Result Struct                                              |
 //+------------------------------------------------------------------+
 enum ENUM_SIGNAL
 {
@@ -45,7 +45,7 @@ enum ENUM_SIGNAL
 struct SSignalResult
 {
    ENUM_SIGNAL        signal;
-   double             confidence_score;        // 0-100
+   double             confidence_score;       // 0-100
    double             atr_value;
    double             ema_fast;
    double             ema_slow;
@@ -63,7 +63,7 @@ struct SSignalResult
 };
 
 //+------------------------------------------------------------------+
-//| Signal Engine Class                                              |
+//| Signal Engine Class                                               |
 //+------------------------------------------------------------------+
 class CSignalEngine
 {
@@ -90,7 +90,7 @@ public:
 };
 
 //+------------------------------------------------------------------+
-//| Constructor                                                      |
+//| Constructor                                                       |
 //+------------------------------------------------------------------+
 CSignalEngine::CSignalEngine()
    : m_handle_ema_fast(INVALID_HANDLE),
@@ -101,7 +101,7 @@ CSignalEngine::CSignalEngine()
 }
 
 //+------------------------------------------------------------------+
-//| Destructor                                                       |
+//| Destructor                                                        |
 //+------------------------------------------------------------------+
 CSignalEngine::~CSignalEngine()
 {
@@ -109,7 +109,7 @@ CSignalEngine::~CSignalEngine()
 }
 
 //+------------------------------------------------------------------+
-//| Initialize Signal Engine                                         |
+//| Initialize Signal Engine                                          |
 //+------------------------------------------------------------------+
 bool CSignalEngine::Init(const string symbol, const ENUM_TIMEFRAMES timeframe, const SSignalEngineConfig &config)
 {
@@ -137,7 +137,7 @@ bool CSignalEngine::Init(const string symbol, const ENUM_TIMEFRAMES timeframe, c
 }
 
 //+------------------------------------------------------------------+
-//| Deinitialize Signal Engine                                       |
+//| Deinitialize Signal Engine                                        |
 //+------------------------------------------------------------------+
 void CSignalEngine::Deinit()
 {
@@ -153,7 +153,7 @@ void CSignalEngine::Deinit()
 }
 
 //+------------------------------------------------------------------+
-//| Calculate Confidence Score                                       |
+//| Calculate Confidence Score                                        |
 //+------------------------------------------------------------------+
 double CSignalEngine::CalculateConfidenceScore(bool is_trend_up, double rsi, double atr)
 {
@@ -176,8 +176,8 @@ double CSignalEngine::CalculateConfidenceScore(bool is_trend_up, double rsi, dou
       else score += 5.0;
    }
    
-   // ATR volatility (20%)
-   if(atr > 0) score += 20.0; // For simplicity, just add full 20% if ATR exists
+   // ATR volatility (20%) - give full score if ATR is valid
+   if(atr > 0) score += 20.0;
    
    return NormalizeDouble(score, 1);
 }
@@ -191,28 +191,35 @@ bool CSignalEngine::Update(SSignalResult &result)
    
    double ema_fast_arr[], ema_slow_arr[], rsi_arr[], atr_arr[];
    
-   // Copy buffers (need 3 bars for crossover check)
-   if(CopyBuffer(m_handle_ema_fast, 0, 0, 3, ema_fast_arr) < 3) return false;
-   if(CopyBuffer(m_handle_ema_slow, 0, 0, 3, ema_slow_arr) < 3) return false;
-   if(CopyBuffer(m_handle_rsi, 0, 0, 2, rsi_arr) < 2) return false;
-   if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_arr) < 1) return false;
+   // Copy buffers - need 3 bars for crossover check
+   int copied_fast = CopyBuffer(m_handle_ema_fast, 0, 0, 3, ema_fast_arr);
+   int copied_slow = CopyBuffer(m_handle_ema_slow, 0, 0, 3, ema_slow_arr);
+   int copied_rsi = CopyBuffer(m_handle_rsi, 0, 0, 2, rsi_arr);
+   int copied_atr = CopyBuffer(m_handle_atr, 0, 0, 2, atr_arr);
+   
+   if(copied_fast < 3 || copied_slow < 3 || copied_rsi < 2 || copied_atr < 1) 
+      return false;
    
    result.ema_fast = ema_fast_arr[0];
    result.ema_slow = ema_slow_arr[0];
    result.rsi_value = rsi_arr[0];
    result.atr_value = atr_arr[0];
    
-   // Check for EMA crossover/crossunder
+   // Check for EMA crossover/crossunder using previous bar values
    bool prev_trend_up = (ema_fast_arr[1] > ema_slow_arr[1]);
    bool curr_trend_up = (result.ema_fast > result.ema_slow);
+   bool prev_prev_trend_up = (ema_fast_arr[2] > ema_slow_arr[2]);
    
-   // Generate signal only on crossover/crossunder
-   if(!prev_trend_up && curr_trend_up && result.rsi_value > m_config.rsi_oversold && result.rsi_value < m_config.rsi_overbought)
+   // Generate signal only on valid crossover/crossunder
+   bool bullish_crossover = !prev_prev_trend_up && prev_trend_up && curr_trend_up;
+   bool bearish_crossunder = prev_prev_trend_up && !prev_trend_up && !curr_trend_up;
+   
+   if(bullish_crossover && result.rsi_value > m_config.rsi_oversold && result.rsi_value < m_config.rsi_overbought)
    {
       result.signal = SIGNAL_BUY;
       result.confidence_score = CalculateConfidenceScore(true, result.rsi_value, result.atr_value);
    }
-   else if(prev_trend_up && !curr_trend_up && result.rsi_value < m_config.rsi_overbought && result.rsi_value > m_config.rsi_oversold)
+   else if(bearish_crossunder && result.rsi_value < m_config.rsi_overbought && result.rsi_value > m_config.rsi_oversold)
    {
       result.signal = SIGNAL_SELL;
       result.confidence_score = CalculateConfidenceScore(false, result.rsi_value, result.atr_value);
@@ -226,4 +233,3 @@ bool CSignalEngine::Update(SSignalResult &result)
    return true;
 }
 //+------------------------------------------------------------------+
-

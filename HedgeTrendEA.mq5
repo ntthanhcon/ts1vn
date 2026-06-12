@@ -4,7 +4,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.00"
+#property version   "1.02"
 #property strict
 #property description "Hedge Trending EA - Modular System with Signal, Execution, Risk, Position & Hedge Engines"
 
@@ -18,68 +18,69 @@
 #include <Trade\SymbolInfo.mqh>
 
 //+------------------------------------------------------------------+
-//| Input Parameters                                                 |
+//| Input Parameters                                                  |
 //+------------------------------------------------------------------+
-// --- Timeframe Settings
-input ENUM_TIMEFRAMES  InpTimeframe           = PERIOD_H1;      // Trading Timeframe
-input ulong            InpMagicNumber         = 51000;          // EA Magic Number
+// --- General Settings
+input ENUM_TIMEFRAMES  InpTimeframe           = PERIOD_H1;     // Trading Timeframe
+input ulong            InpMagicNumber         = 51000;         // EA Magic Number
 
 // --- Signal Engine Settings
 input group "=== Signal Engine ==="
-input int              InpEmaFastPeriod       = 50;             // EMA Fast Period
-input int              InpEmaSlowPeriod       = 200;            // EMA Slow Period
-input int              InpRsiPeriod           = 14;             // RSI Period
-input int              InpRsiOversold         = 30;             // RSI Oversold
-input int              InpRsiOverbought       = 70;             // RSI Overbought
-input int              InpAtrPeriod           = 14;             // ATR Period
-input double           InpMinConfidence       = 60.0;           // Min Confidence Score (0-100)
+input int              InpEmaFastPeriod       = 50;            // EMA Fast Period
+input int              InpEmaSlowPeriod       = 200;           // EMA Slow Period
+input int              InpRsiPeriod           = 14;            // RSI Period
+input int              InpRsiOversold         = 30;            // RSI Oversold
+input int              InpRsiOverbought       = 70;            // RSI Overbought
+input int              InpAtrPeriod           = 14;            // ATR Period
+input double           InpMinConfidence       = 60.0;          // Min Confidence Score (0-100)
 
 // --- Execution Engine Settings
 input group "=== Execution Engine ==="
-input bool             InpEnableSpreadCheck   = true;           // Enable Spread Check
-input double           InpMaxSpreadXAUUSD     = 50.0;           // Max Spread XAUUSD (pips)
-input double           InpMaxSpreadEURUSD     = 3.0;            // Max Spread EURUSD (pips)
-input double           InpMaxSpreadXAGUSD     = 30.0;           // Max Spread XAGUSD (pips)
+input bool             InpEnableSpreadCheck   = true;          // Enable Spread Check
+input double           InpMaxSpreadXAUUSD     = 50.0;          // Max Spread XAUUSD (pips)
+input double           InpMaxSpreadEURUSD     = 3.0;           // Max Spread EURUSD (pips)
+input double           InpMaxSpreadXAGUSD     = 30.0;          // Max Spread XAGUSD (pips)
+input double           InpMaxSpreadDefault    = 10.0;          // Max Spread Other Symbols (pips)
 
 // --- Risk Manager Settings
 input group "=== Risk Manager ==="
-input bool             InpUsePercentRisk      = true;           // Use % Risk per Trade
-input double           InpRiskPercent         = 1.0;            // Risk % per Trade
-input double           InpFixedLot            = 0.1;            // Fixed Lot Size
-input double           InpSlAtrMultiplier     = 1.5;            // SL = ATR * Multiplier
-input double           InpTpAtrMultiplier     = 3.0;            // TP = ATR * Multiplier
-input double           InpDailyLossLimit      = 5.0;            // Daily Loss Limit (%)
-input double           InpDailyProfitTarget   = 10.0;           // Daily Profit Target (%)
-input int              InpMaxPositionsPerSym  = 3;              // Max Positions per Symbol
-input double           InpMaxExposurePercent  = 30.0;           // Max Exposure (%)
+input bool             InpUsePercentRisk      = true;          // Use % Risk per Trade
+input double           InpRiskPercent         = 1.0;           // Risk % per Trade
+input double           InpFixedLot            = 0.1;           // Fixed Lot Size
+input double           InpSlAtrMultiplier     = 1.5;           // SL = ATR * Multiplier
+input double           InpTpAtrMultiplier     = 3.0;           // TP = ATR * Multiplier
+input double           InpDailyLossLimit      = 5.0;           // Daily Loss Limit (%)
+input double           InpDailyProfitTarget   = 10.0;          // Daily Profit Target (%)
+input int              InpMaxPositionsPerSym  = 3;             // Max Positions per Symbol
+input double           InpMaxExposurePercent  = 30.0;          // Max Exposure (%)
 
 // --- Position Manager Settings
 input group "=== Position Manager ==="
-input bool             InpEnableScaleIn       = true;           // Enable Scale In
-input double           InpScaleInRR           = 1.0;            // Scale In at X RR
-input double           InpScaleInLotMult      = 0.5;            // Scale In Lot Multiplier
-input bool             InpEnablePartialClose  = true;           // Enable Partial Close
-input double           InpPartialCloseRR      = 1.0;            // Partial Close at X RR
-input double           InpPartialClosePercent = 50.0;           // Partial Close %
-input bool             InpEnableTrailingStop  = true;           // Enable Trailing Stop
-input double           InpTrailingStartRR     = 1.5;            // Start Trailing at X RR
-input double           InpTrailingAtrMult     = 0.8;            // Trailing Distance (ATR * X)
+input bool             InpEnableScaleIn       = true;          // Enable Scale In
+input double           InpScaleInRR           = 1.0;           // Scale In at X RR
+input double           InpScaleInLotMult      = 0.5;           // Scale In Lot Multiplier
+input bool             InpEnablePartialClose  = true;          // Enable Partial Close
+input double           InpPartialCloseRR      = 1.0;           // Partial Close at X RR
+input double           InpPartialClosePercent = 50.0;          // Partial Close %
+input bool             InpEnableTrailingStop  = true;          // Enable Trailing Stop
+input double           InpTrailingStartRR     = 1.5;           // Start Trailing at X RR
+input double           InpTrailingAtrMult     = 0.8;           // Trailing Distance (ATR * X)
 
 // --- Hedge Engine Settings
 input group "=== Hedge Engine ==="
-input bool             InpEnableHedging       = true;           // Enable Hedging
-input ulong            InpHedgeMagicNumber    = 99999;          // Hedge Magic Number
-input double           InpHedgeLossThreshold  = 50.0;           // Hedge Loss Threshold (pips)
-input double           InpHedgeLotCoefficient = 1.5;            // Hedge Lot Multiplier
-input int              InpHedgeMaxCount       = 3;              // Max Hedges
-input int              InpHedgeCooldownMin    = 5;              // Cooldown (minutes)
+input bool             InpEnableHedging       = true;          // Enable Hedging
+input ulong            InpHedgeMagicNumber    = 99999;         // Hedge Magic Number
+input double           InpHedgeLossThreshold  = 50.0;          // Hedge Loss Threshold (pips)
+input double           InpHedgeLotCoefficient = 1.5;           // Hedge Lot Multiplier
+input int              InpHedgeMaxCount       = 3;             // Max Hedges
+input int              InpHedgeCooldownMin    = 5;             // Cooldown (minutes)
 
 // --- Misc Settings
 input group "=== Misc ==="
-input bool             InpDebugMode           = false;          // Enable Debug Logs
+input bool             InpDebugMode           = false;         // Enable Debug Logs
 
 //+------------------------------------------------------------------+
-//| Global Variables                                                 |
+//| Global Variables                                                  |
 //+------------------------------------------------------------------+
 CSignalEngine        g_signal_engine;
 CExecutionEngine     g_execution_engine;
@@ -91,7 +92,18 @@ CSymbolInfo          g_symbol_info;
 datetime             g_last_bar_time = 0;
 
 //+------------------------------------------------------------------+
-//| Expert Initialization                                            |
+//| Get Symbol-Specific Spread Limit                                  |
+//+------------------------------------------------------------------+
+double GetSymbolSpreadLimit()
+{
+   if(_Symbol == "XAUUSD") return InpMaxSpreadXAUUSD;
+   if(_Symbol == "EURUSD") return InpMaxSpreadEURUSD;
+   if(_Symbol == "XAGUSD") return InpMaxSpreadXAGUSD;
+   return InpMaxSpreadDefault;
+}
+
+//+------------------------------------------------------------------+
+//| Expert Initialization                                             |
 //+------------------------------------------------------------------+
 int OnInit()
 {
@@ -124,6 +136,7 @@ int OnInit()
    exec_cfg.symbol_spread_xauusd = InpMaxSpreadXAUUSD;
    exec_cfg.symbol_spread_eurusd = InpMaxSpreadEURUSD;
    exec_cfg.symbol_spread_xagusd = InpMaxSpreadXAGUSD;
+   exec_cfg.max_spread_pips = InpMaxSpreadDefault;
    
    if(!g_execution_engine.Init(_Symbol, exec_cfg))
    {
@@ -186,15 +199,16 @@ int OnInit()
    // Setup trade object
    g_trade.SetExpertMagicNumber(InpMagicNumber);
    g_trade.SetTypeFilling(ORDER_FILLING_IOC);
-   int spread_pts = (int)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
-   g_trade.SetDeviationInPoints(MathMax(20, spread_pts * 2));
+   g_trade.SetTypeTime(ORDER_TIME_GTC);
    
-   Print("HedgeTrend EA initialized successfully!");
+   Print("HedgeTrend EA v1.02 initialized successfully!");
+   Print("Symbol: ", _Symbol, " | Timeframe: ", EnumToString(InpTimeframe));
+   
    return INIT_SUCCEEDED;
 }
 
 //+------------------------------------------------------------------+
-//| Expert Deinitialization                                          |
+//| Expert Deinitialization                                           |
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
@@ -204,11 +218,11 @@ void OnDeinit(const int reason)
    g_position_manager.Deinit();
    g_hedge_engine.Deinit();
    
-   Print("HedgeTrend EA deinitialized");
+   Print("HedgeTrend EA deinitialized (reason: ", reason, ")");
 }
 
 //+------------------------------------------------------------------+
-//| Check for new bar                                                |
+//| Check for new bar                                                 |
 //+------------------------------------------------------------------+
 bool IsNewBar()
 {
@@ -217,40 +231,6 @@ bool IsNewBar()
    {
       g_last_bar_time = current_bar_time;
       return true;
-   }
-   return false;
-}
-
-//+------------------------------------------------------------------+
-//| Execute Trade                                                    |
-//+------------------------------------------------------------------+
-bool ExecuteTrade(ENUM_SIGNAL signal, double lot, double sl, double tp)
-{
-   if(signal == SIGNAL_BUY)
-   {
-      if(g_trade.Buy(lot, _Symbol, sl, tp, "HedgeTrend Buy"))
-      {
-         Print("Buy executed: Lot=", lot, " SL=", sl, " TP=", tp);
-         return true;
-      }
-      else
-      {
-         Print("Buy failed: Error=", GetLastError(), " Retcode=", g_trade.ResultRetcode());
-         return false;
-      }
-   }
-   else if(signal == SIGNAL_SELL)
-   {
-      if(g_trade.Sell(lot, _Symbol, sl, tp, "HedgeTrend Sell"))
-      {
-         Print("Sell executed: Lot=", lot, " SL=", sl, " TP=", tp);
-         return true;
-      }
-      else
-      {
-         Print("Sell failed: Error=", GetLastError(), " Retcode=", g_trade.ResultRetcode());
-         return false;
-      }
    }
    return false;
 }
@@ -272,7 +252,7 @@ bool IsMarketClosed()
 }
 
 //+------------------------------------------------------------------+
-//| Validate SL and TP prices                                        |
+//| Validate SL and TP prices                                         |
 //+------------------------------------------------------------------+
 bool ValidateSLTP(double entry, double sl, double tp, ENUM_SIGNAL signal)
 {
@@ -280,7 +260,6 @@ bool ValidateSLTP(double entry, double sl, double tp, ENUM_SIGNAL signal)
       return true;
       
    double min_distance = g_symbol_info.StopsLevel() * g_symbol_info.Point();
-   double point = g_symbol_info.Point();
    
    if(signal == SIGNAL_BUY)
    {
@@ -301,7 +280,41 @@ bool ValidateSLTP(double entry, double sl, double tp, ENUM_SIGNAL signal)
 }
 
 //+------------------------------------------------------------------+
-//| Expert Tick Function                                             |
+//| Execute Trade                                                     |
+//+------------------------------------------------------------------+
+bool ExecuteTrade(ENUM_SIGNAL signal, double lot, double sl, double tp)
+{
+   if(signal == SIGNAL_BUY)
+   {
+      if(g_trade.Buy(lot, _Symbol, sl, tp))
+      {
+         Print("BUY executed: Ticket=", g_trade.ResultOrder(), " Lot=", lot, " SL=", sl, " TP=", tp);
+         return true;
+      }
+      else
+      {
+         Print("BUY failed: Error=", GetLastError(), " Retcode=", g_trade.ResultRetcode(), " Desc=", g_trade.ResultRetcodeDescription());
+         return false;
+      }
+   }
+   else if(signal == SIGNAL_SELL)
+   {
+      if(g_trade.Sell(lot, _Symbol, sl, tp))
+      {
+         Print("SELL executed: Ticket=", g_trade.ResultOrder(), " Lot=", lot, " SL=", sl, " TP=", tp);
+         return true;
+      }
+      else
+      {
+         Print("SELL failed: Error=", GetLastError(), " Retcode=", g_trade.ResultRetcode(), " Desc=", g_trade.ResultRetcodeDescription());
+         return false;
+      }
+   }
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Expert Tick Function                                              |
 //+------------------------------------------------------------------+
 void OnTick()
 {
@@ -338,6 +351,7 @@ void OnTick()
    {
       Print("New bar - Signal=", EnumToString(signal_result.signal), 
             " Confidence=", signal_result.confidence_score,
+            " Spread=", exec_result.current_spread_pips, " pips",
             " Spread OK=", exec_result.can_execute,
             " Risk OK=", risk_result.can_trade);
    }
@@ -350,28 +364,29 @@ void OnTick()
    double adjusted_confidence = signal_result.confidence_score + exec_result.score_adjustment;
    if(adjusted_confidence < InpMinConfidence)
    {
-      if(InpDebugMode) Print("Confidence too low: ", adjusted_confidence);
+      if(InpDebugMode) Print("Confidence too low: ", adjusted_confidence, " (min: ", InpMinConfidence, ")");
       return;
    }
    
    // Check execution
    if(!exec_result.can_execute)
    {
-      if(InpDebugMode) Print("Execution not allowed: Spread=", exec_result.current_spread_pips);
+      if(InpDebugMode) Print("Execution not allowed: Spread=", exec_result.current_spread_pips, " pips (limit: ", GetSymbolSpreadLimit(), ")");
       return;
    }
    
    // Check risk
    if(!risk_result.can_trade)
    {
-      if(InpDebugMode) Print("Risk limits reached");
+      if(InpDebugMode) Print("Risk limits reached: Daily P&L=", risk_result.current_daily_pnl_percent, "%, Exposure=", risk_result.current_exposure_percent, "%");
       return;
    }
    
    // Check max positions per symbol
-   if(g_position_manager.CountOpenPositions() >= InpMaxPositionsPerSym)
+   int open_positions = g_position_manager.CountOpenPositions();
+   if(open_positions >= InpMaxPositionsPerSym)
    {
-      if(InpDebugMode) Print("Max positions reached");
+      if(InpDebugMode) Print("Max positions reached: ", open_positions, "/", InpMaxPositionsPerSym);
       return;
    }
    
@@ -399,7 +414,7 @@ void OnTick()
    // Validate SL/TP distance
    if(!ValidateSLTP(entry_price, sl, tp, signal_result.signal))
    {
-      if(InpDebugMode) Print("Invalid SL/TP distance");
+      if(InpDebugMode) Print("Invalid SL/TP distance - SL=", sl, " TP=", tp, " Entry=", entry_price);
       return;
    }
    
@@ -414,8 +429,18 @@ void OnTick()
       return;
    }
    
+   // Validate lot size
+   lot = g_symbol_info.LotsMin() > lot ? g_symbol_info.LotsMin() : lot;
+   lot = g_symbol_info.LotsMax() < lot ? g_symbol_info.LotsMax() : lot;
+   lot = g_symbol_info.NormalizeLot(lot);
+   
+   if(lot < g_symbol_info.LotsMin())
+   {
+      if(InpDebugMode) Print("Lot size below minimum: ", lot, " < ", g_symbol_info.LotsMin());
+      return;
+   }
+   
    // Execute trade
    ExecuteTrade(signal_result.signal, lot, sl, tp);
 }
 //+------------------------------------------------------------------+
-

@@ -87,7 +87,7 @@ public:
    int               CountOpenPositions(ENUM_POSITION_TYPE type = WRONG_VALUE);
    
 private:
-   SPositionTrack*   FindTrackedPosition(ulong ticket);
+   int               FindTrackedPositionIndex(ulong ticket);
    void              AddTrackedPosition(ulong ticket);
    double            CalculateRR(ulong ticket);
    bool              DoPartialClose(ulong ticket);
@@ -139,16 +139,16 @@ void CPositionManager::Deinit()
 }
 
 //+------------------------------------------------------------------+
-//| Find tracked position                                            |
+//| Find tracked position index                                      |
 //+------------------------------------------------------------------+
-SPositionTrack* CPositionManager::FindTrackedPosition(ulong ticket)
+int CPositionManager::FindTrackedPositionIndex(ulong ticket)
 {
    for(int i = 0; i < m_tracked_count; i++)
    {
       if(m_tracked_positions[i].ticket == ticket)
-         return &m_tracked_positions[i];
+         return i;
    }
-   return NULL;
+   return -1;
 }
 
 //+------------------------------------------------------------------+
@@ -156,7 +156,7 @@ SPositionTrack* CPositionManager::FindTrackedPosition(ulong ticket)
 //+------------------------------------------------------------------+
 void CPositionManager::AddTrackedPosition(ulong ticket)
 {
-   if(FindTrackedPosition(ticket) != NULL)
+   if(FindTrackedPositionIndex(ticket) != -1)
       return;
       
    if(m_tracked_count < 100)
@@ -273,18 +273,18 @@ void CPositionManager::ManagePositions(double atr)
       ulong ticket = m_position_info.Ticket();
       AddTrackedPosition(ticket);
       
-      SPositionTrack* track = FindTrackedPosition(ticket);
-      if(track == NULL) continue;
+      int trackIndex = FindTrackedPositionIndex(ticket);
+      if(trackIndex == -1) continue;
       
       double rr = CalculateRR(ticket);
       
       // Partial close
-      if(m_config.enable_partial_close && !track->partial_closed && rr >= m_config.partial_close_rr)
+      if(m_config.enable_partial_close && !m_tracked_positions[trackIndex].partial_closed && rr >= m_config.partial_close_rr)
       {
          if(DoPartialClose(ticket))
          {
-            track->partial_closed = true;
-            track->last_update = TimeCurrent();
+            m_tracked_positions[trackIndex].partial_closed = true;
+            m_tracked_positions[trackIndex].last_update = TimeCurrent();
          }
       }
       
@@ -296,4 +296,3 @@ void CPositionManager::ManagePositions(double atr)
    }
 }
 //+------------------------------------------------------------------+
-

@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //|                                             RiskManager.mqh      |
-//|                    Risk Manager - Lot Sizing & Limits            |
+//|                    Risk Manager - Lot Sizing & Limits           |
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
@@ -15,15 +15,15 @@
 //+------------------------------------------------------------------+
 struct SRiskManagerConfig
 {
-   double             risk_percent;            // Risk % per trade (0-10)
-   double             sl_atr_multiplier;       // SL = ATR * multiplier
-   double             tp_atr_multiplier;       // TP = ATR * multiplier
-   double             daily_loss_limit;        // Max daily loss (%)
-   double             daily_profit_target;     // Daily profit target (%)
-   int                max_positions_per_symbol;// Max open positions per symbol
-   double             max_exposure_percent;    // Max total exposure (%)
-   double             fixed_lot;               // Fixed lot (if not using % risk)
-   bool               use_percent_risk;        // True = % risk, False = fixed lot
+   double             risk_percent;         // Risk % per trade (0-10)
+   double             sl_atr_multiplier;    // SL = ATR * multiplier
+   double             tp_atr_multiplier;    // TP = ATR * multiplier
+   double             daily_loss_limit;     // Max daily loss (%)
+   double             daily_profit_target;  // Daily profit target (%)
+   int                max_positions_per_symbol; // Max open positions per symbol
+   double             max_exposure_percent; // Max total exposure (%)
+   double             fixed_lot;            // Fixed lot (if not using % risk)
+   bool               use_percent_risk;     // True = % risk, False = fixed lot
    
    SRiskManagerConfig()
    {
@@ -179,11 +179,12 @@ double CRiskManager::CalculateLotSize(double sl_distance)
    double balance = m_account_info.Balance();
    double risk_amount = balance * (m_config.risk_percent / 100.0);
    
-   double tick_value = m_symbol_info.TradeTickValue();
-   double tick_size = m_symbol_info.TradeTickSize();
+   double tick_value = m_symbol_info.TickValue();
+   double tick_size = m_symbol_info.TickSize();
    if(tick_size <= 0 || tick_value <= 0) return 0.0;
    
-   double value_per_lot = (sl_distance / tick_size) * tick_value;
+   double ticks_in_sl = sl_distance / tick_size;
+   double value_per_lot = ticks_in_sl * tick_value;
    if(value_per_lot <= 0) return 0.0;
    
    double lot = risk_amount / value_per_lot;
@@ -233,14 +234,10 @@ bool CRiskManager::Update(double atr, SRiskManagerResult &result)
       return true;
    }
    
-   // Calculate SL and TP distances (not final SL/TP prices)
-   double sl_distance = atr * m_config.sl_atr_multiplier;
-   double tp_distance = atr * m_config.tp_atr_multiplier;
-   
    // Calculate lot size
-   result.lot_size = CalculateLotSize(sl_distance);
+   double sl_dist = atr * m_config.sl_atr_multiplier;
+   result.lot_size = CalculateLotSize(sl_dist);
    
    return true;
 }
 //+------------------------------------------------------------------+
-

@@ -4,18 +4,17 @@
 //+------------------------------------------------------------------+
 #property copyright "Sector51 Core"
 #property link      "https://www.sector51.com"
-#property version   "1.00"
+#property version   "1.01"
 #property strict
 
 #include <Trade\SymbolInfo.mqh>
 
 //+------------------------------------------------------------------+
-//| Execution Engine Configuration                                   |
+//| Execution Engine Configuration                                    |
 //+------------------------------------------------------------------+
 struct SExecutionEngineConfig
 {
-   double             max_spread_pips;         // Max allowed spread in pips
-   double             max_slippage_pips;       // Max estimated slippage
+   double             max_spread_pips;         // Max allowed spread in pips (default)
    double             symbol_spread_xauusd;    // XAUUSD specific spread limit
    double             symbol_spread_eurusd;    // EURUSD specific spread limit
    double             symbol_spread_xagusd;    // XAGUSD specific spread limit
@@ -23,8 +22,7 @@ struct SExecutionEngineConfig
    
    SExecutionEngineConfig()
    {
-      max_spread_pips = 50.0;
-      max_slippage_pips = 10.0;
+      max_spread_pips = 10.0;
       symbol_spread_xauusd = 50.0;
       symbol_spread_eurusd = 3.0;
       symbol_spread_xagusd = 30.0;
@@ -33,7 +31,7 @@ struct SExecutionEngineConfig
 };
 
 //+------------------------------------------------------------------+
-//| Execution Result Struct                                          |
+//| Execution Result Struct                                           |
 //+------------------------------------------------------------------+
 struct SExecutionResult
 {
@@ -56,7 +54,7 @@ struct SExecutionResult
 };
 
 //+------------------------------------------------------------------+
-//| Execution Engine Class                                           |
+//| Execution Engine Class                                            |
 //+------------------------------------------------------------------+
 class CExecutionEngine
 {
@@ -79,14 +77,14 @@ public:
 };
 
 //+------------------------------------------------------------------+
-//| Constructor                                                      |
+//| Constructor                                                       |
 //+------------------------------------------------------------------+
 CExecutionEngine::CExecutionEngine() : m_spread_history_count(0)
 {
 }
 
 //+------------------------------------------------------------------+
-//| Destructor                                                       |
+//| Destructor                                                        |
 //+------------------------------------------------------------------+
 CExecutionEngine::~CExecutionEngine()
 {
@@ -94,7 +92,7 @@ CExecutionEngine::~CExecutionEngine()
 }
 
 //+------------------------------------------------------------------+
-//| Initialize Execution Engine                                      |
+//| Initialize Execution Engine                                       |
 //+------------------------------------------------------------------+
 bool CExecutionEngine::Init(const string symbol, const SExecutionEngineConfig &config)
 {
@@ -111,7 +109,7 @@ bool CExecutionEngine::Init(const string symbol, const SExecutionEngineConfig &c
 }
 
 //+------------------------------------------------------------------+
-//| Deinitialize Execution Engine                                    |
+//| Deinitialize Execution Engine                                     |
 //+------------------------------------------------------------------+
 void CExecutionEngine::Deinit()
 {
@@ -120,7 +118,7 @@ void CExecutionEngine::Deinit()
 }
 
 //+------------------------------------------------------------------+
-//| Convert price difference to pips                                 |
+//| Convert price difference to pips                                  |
 //+------------------------------------------------------------------+
 double CExecutionEngine::PriceToPips(double price)
 {
@@ -131,7 +129,7 @@ double CExecutionEngine::PriceToPips(double price)
 }
 
 //+------------------------------------------------------------------+
-//| Get symbol-specific spread limit                                 |
+//| Get symbol-specific spread limit                                  |
 //+------------------------------------------------------------------+
 double CExecutionEngine::GetSymbolSpreadLimit()
 {
@@ -142,7 +140,7 @@ double CExecutionEngine::GetSymbolSpreadLimit()
 }
 
 //+------------------------------------------------------------------+
-//| Update Execution Engine                                          |
+//| Update Execution Engine                                           |
 //+------------------------------------------------------------------+
 bool CExecutionEngine::Update(SExecutionResult &result)
 {
@@ -203,4 +201,3 @@ bool CExecutionEngine::Update(SExecutionResult &result)
    return true;
 }
 //+------------------------------------------------------------------+
-

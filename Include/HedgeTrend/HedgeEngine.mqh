@@ -220,9 +220,9 @@ bool CHedgeEngine::OpenHedge(ulong main_ticket, double lot)
       
    bool success = false;
    if(m_position_info.PositionType() == POSITION_TYPE_BUY)
-      success = m_trade.Sell(lot, m_symbol, 0.0, 0.0, "Hedge for " + IntegerToString(main_ticket));
+      success = m_trade.Sell(lot, m_symbol, 0.0, 0.0);
    else
-      success = m_trade.Buy(lot, m_symbol, 0.0, 0.0, "Hedge for " + IntegerToString(main_ticket));
+      success = m_trade.Buy(lot, m_symbol, 0.0, 0.0);
       
    return success;
 }
